@@ -174,6 +174,7 @@ async def get_info():
         "endpoints": {
             "POST /share": "Share new knowledge about a feature",
             "GET /retrieve": "Get knowledge with filters (feature, branch, agent)",
+            "PUT /update/{id}": "Update existing knowledge entry (refine plans, fix mistakes)",
             "GET /recent": "Get recent updates across all features",
             "GET /features": "List all knowledge branches with statistics",
             "DELETE /delete/{id}": "Delete specific knowledge entry by ID",
@@ -564,6 +565,63 @@ async def delete_feature(
         logger.error(f"Error deleting feature entries: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to delete feature entries: {str(e)}")
 
+# Update existing entry
+@app.put("/update/{entry_id}", response_model=Dict[str, Any])
+async def update_entry(
+    entry_id: int,
+    knowledge: KnowledgeShare
+):
+    """
+    Update an existing knowledge entry.
+    Preserves the original ID but updates content and timestamp.
+    Perfect for refining plans and evolving documentation.
+    """
+    try:
+        with get_db() as conn:
+            cursor = conn.cursor()
+
+            # Check if entry exists
+            cursor.execute("SELECT * FROM knowledge WHERE id = ?", (entry_id,))
+            existing = cursor.fetchone()
+
+            if not existing:
+                raise HTTPException(status_code=404, detail=f"Entry {entry_id} not found")
+
+            # Update the entry
+            metadata_json = json.dumps(knowledge.metadata) if knowledge.metadata else None
+
+            cursor.execute("""
+                UPDATE knowledge
+                SET agent = ?, feature = ?, branch = ?, summary = ?,
+                    metadata = ?, timestamp = CURRENT_TIMESTAMP
+                WHERE id = ?
+            """, (
+                knowledge.agent,
+                knowledge.feature,
+                knowledge.branch,
+                knowledge.summary,
+                metadata_json,
+                entry_id
+            ))
+
+            conn.commit()
+
+            logger.info(f"Updated entry {entry_id} - Agent: {knowledge.agent}, Feature: {knowledge.feature}")
+
+            return {
+                "status": "updated",
+                "id": entry_id,
+                "feature": knowledge.feature,
+                "agent": knowledge.agent,
+                "message": f"Knowledge entry {entry_id} updated successfully",
+                "timestamp": datetime.now().isoformat()
+            }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating entry: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to update entry: {str(e)}")
 
 # Run the server
 if __name__ == "__main__":

@@ -7,11 +7,12 @@
 ## Decision Tree for Agents
 1. **Starting new feature work?** → `GET /retrieve?feature=YOUR-FEATURE`
 2. **Completed something?** → `POST /share` with details
-3. **Need to know what's happening?** → `GET /recent`
-4. **Exploring available work?** → `GET /features`
-5. **Made a mistake?** → `DELETE /delete/{id}`
-6. **Abandoning feature?** → `DELETE /delete/feature/{feature}?confirm=true`
-7. **Fresh start needed?** → `DELETE /delete/all?confirm=true`
+3. **Need to refine your knowledge?** → `PUT /update/{id}` with improvements
+4. **Need to know what's happening?** → `GET /recent`
+5. **Exploring available work?** → `GET /features`
+6. **Made a mistake?** → `DELETE /delete/{id}`
+7. **Abandoning feature?** → `DELETE /delete/feature/{feature}?confirm=true`
+8. **Fresh start needed?** → `DELETE /delete/all?confirm=true`
 
 ## Your Workflow
 
@@ -88,6 +89,43 @@ curl http://localhost:8001/recent
 ```bash
 curl http://localhost:8001/features
 ```
+
+## Knowledge Evolution Workflow
+
+### Initial Share
+When you first create a plan or implementation:
+```bash
+POST http://localhost:8001/share
+Content-Type: application/json
+
+{
+  "agent": "research-agent",
+  "feature": "user-auth",
+  "summary": "DRAFT PLAN: Basic authentication system...",
+  "metadata": {"status": "draft", "version": 1}
+}
+# Returns: {"id": 1, ...}
+```
+
+### Refine and Update
+As you learn more or requirements change:
+```bash
+PUT http://localhost:8001/update/1
+Content-Type: application/json
+
+{
+  "agent": "research-agent",
+  "feature": "user-auth",
+  "summary": "REFINED PLAN v2: Added rate limiting and MFA requirements...",
+  "metadata": {"status": "ready", "version": 2}
+}
+```
+
+### Best Practices for Updates
+- Include version in metadata for tracking
+- Add revision notes at the top of summary
+- Keep the same feature name for consistency
+- Update status in metadata (draft → refined → ready)
 
 ## Cleanup Operations
 

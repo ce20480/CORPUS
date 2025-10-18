@@ -79,7 +79,22 @@ curl -X POST http://localhost:8000/share \
   }'
 ```
 
-### 3. Retrieve Knowledge - `GET /retrieve`
+### 3. Update Knowledge - `PUT /update/{id}`
+Update an existing knowledge entry to refine or correct it.
+```bash
+curl -X PUT http://localhost:8001/update/1 \
+  -H "Content-Type: application/json" \
+  -d '{
+    "agent": "research-agent",
+    "feature": "user-auth",
+    "summary": "UPDATED PLAN v2: Now includes OAuth2 support and rate limiting",
+    "branch": "feature/user-auth",
+    "metadata": {"version": 2, "status": "refined"}
+  }'
+```
+This preserves the entry ID while updating the content and timestamp.
+
+### 4. Retrieve Knowledge - `GET /retrieve`
 Get relevant knowledge with optional filters.
 ```bash
 # Get all knowledge for a feature
@@ -95,7 +110,7 @@ curl "http://localhost:8000/retrieve?branch=feature/user-auth"
 curl "http://localhost:8000/retrieve?feature=user-auth&agent=backend-agent&limit=5"
 ```
 
-### 4. Recent Updates - `GET /recent`
+### 5. Recent Updates - `GET /recent`
 See what's been shared recently across all features.
 ```bash
 # Last 24 hours (default)
@@ -105,7 +120,7 @@ curl http://localhost:8000/recent
 curl "http://localhost:8000/recent?hours=48&limit=10"
 ```
 
-### 5. List Features - `GET /features`
+### 6. List Features - `GET /features`
 Discover what features are being worked on.
 ```bash
 curl http://localhost:8000/features
@@ -129,7 +144,7 @@ Response:
 ]
 ```
 
-### 6. Health Check - `GET /health`
+### 7. Health Check - `GET /health`
 Check server status and statistics.
 ```bash
 curl http://localhost:8000/health
